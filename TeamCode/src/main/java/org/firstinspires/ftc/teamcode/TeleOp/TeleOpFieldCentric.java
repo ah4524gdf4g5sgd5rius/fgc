@@ -22,6 +22,9 @@ public class TeleOpFieldCentric extends LinearOpMode {
     DcMotorEx sm; //Šaudyklė
     DcMotor pak; //Pasikėlimo ant lyno variklis
     DcMotor pad; //Padavimas
+    boolean prev = false;
+    boolean MotorOn = false;
+
 
     public double drive_speed = 1;
 
@@ -77,8 +80,6 @@ public class TeleOpFieldCentric extends LinearOpMode {
             ///==========================Telemetrija=====================
             telemetry.addData("RPM: ", rpm);
             telemetry.addData("Kampas: ", kampas);
-            telemetry.addData("Šaudyklė galia:", sm.getPower());
-            telemetry.addData("Padavimo galia: ", pad.getPower());
             telemetry.update();
 
 
@@ -109,25 +110,16 @@ public class TeleOpFieldCentric extends LinearOpMode {
             }
             ///====================Padavimas=========================
             if (rpm >= 55) {
-                sm.setPower(1);
+                pad.setPower(1);
             }
             else if (rpm < 55){
-                sm.setPower(0.0);
+                pad.setPower(0.0);
             }
             ///======================Šaudyklė=====================
-            if (gamepad1.right_bumper){
-                pad.setPower(0.8);
-            }
-            else if (!gamepad1.right_bumper){
-                pad.setPower(0.0);
 
-            }
             boolean paspaustas = false;
-            boolean prev = false;
-            boolean MotorOn = false;
+            paspaustas = gamepad1.right_bumper;
 
-
-            paspaustas = gamepad1.triangle;
                 if (paspaustas && !prev){
                     MotorOn = !MotorOn;
                 }
@@ -136,12 +128,11 @@ public class TeleOpFieldCentric extends LinearOpMode {
                     sm.setPower(1);
                 }
                 else{
-                    sm.setPower(0);
+                    sm.setPower(0.1);
                 }
 
-                 telemetry.addData("Paspaustas ", paspaustas);
-                 telemetry.addData("prev ", prev);
-                 telemetry.addData("MotorOn ", MotorOn);
+
+
             ///=====================Pasikėlimas=====================
             if (gamepad1.dpad_up) {
                 pak.setPower(0.75);
@@ -151,7 +142,7 @@ public class TeleOpFieldCentric extends LinearOpMode {
             if (gamepad1.dpad_down){
                 pak.setPower(0.0);
             }
-
+            telemetry.update();
         }
 
     }
