@@ -22,8 +22,6 @@ public class TeleOpFieldCentric extends LinearOpMode {
     DcMotorEx sm; //Šaudyklė
     DcMotor pak; //Pasikėlimo ant lyno variklis
     DcMotor pad; //Padavimas
-    boolean paspaustas = false;
-    boolean pultelis = false;
 
     public double drive_speed = 1;
 
@@ -39,6 +37,7 @@ public class TeleOpFieldCentric extends LinearOpMode {
         pem = hardwareMap.get(DcMotor.class, "pem");
         pad = hardwareMap.get(DcMotor.class, "pad");
         sm = hardwareMap.get(DcMotorEx.class, "sm");
+        pak = hardwareMap.get(DcMotor.class, "pak");
 
         kP.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         dP.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
@@ -51,12 +50,12 @@ public class TeleOpFieldCentric extends LinearOpMode {
         pad.setDirection(DcMotorSimple.Direction.REVERSE);
         sm.setDirection(DcMotorSimple.Direction.REVERSE);
 
-        sm.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
 
 
 
         MecanumDrive drive = new MecanumDrive(kP, dP, kG, dG);
-        /// !!!!!!!!!!!!!!!!!!SUDERINTI!!!!!!!!!!!!!!!!!!!!!!
+        /// =======================IMU==========================
         imu = hardwareMap.get(IMU.class, "imu");
         IMU.Parameters parameters= new IMU.Parameters(new RevHubOrientationOnRobot(
                 RevHubOrientationOnRobot.LogoFacingDirection.DOWN,
@@ -72,13 +71,17 @@ public class TeleOpFieldCentric extends LinearOpMode {
         waitForStart();
 
         while (!isStopRequested()) {
-
             double rpm = sm.getVelocity() / 28;
             double t = getRuntime();
             double kampas = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.DEGREES);
-
-            telemetry.addData("RPM:", rpm);
+            ///==========================Telemetrija=====================
+            telemetry.addData("RPM: ", rpm);
+            telemetry.addData("Kampas: ", kampas);
+            telemetry.addData("Šaudyklė galia:", sm.getPower());
+            telemetry.addData("Padavimo galia: ", pad.getPower());
             telemetry.update();
+
+
             ///================VAŽIUOKLĖ=========================
             drive.driveFieldCentric(
                     gamepad1.left_stick_x * drive_speed,
@@ -104,37 +107,41 @@ public class TeleOpFieldCentric extends LinearOpMode {
             } else if (!gamepad1.left_bumper && !gamepad1.right_bumper) {
                 pem.setPower(0.0);
             }
-            ///====================Šaudyklė=========================
-//            if (gamepad1.right_trigger > 0.15) {
-//                sm.setPower(1);
-//            }
-//            else if (gamepad1.right_trigger < 0.15){
-//                sm.setPower(0.0);
-//            }
-            //=======================Jungiklio testas==============
-            if (gamepad1.right_bumper && !paspaustas){
-                pultelis = !pultelis;
-                paspaustas = true;
-            }
-            if (!gamepad1.right_bumper){
-                paspaustas = false;
-            }
-            if (pultelis) {
+            ///====================Padavimas=========================
+            if (rpm >= 55) {
                 sm.setPower(1);
-            } else if (!pultelis){
+            }
+            else if (rpm < 55){
                 sm.setPower(0.0);
             }
-
-            ///======================Padavimas=====================
-            if (gamepad1.right_bumper && t < 0.5){
+            ///======================Šaudyklė=====================
+            if (gamepad1.right_bumper){
                 pad.setPower(0.8);
             }
-            else if (!gamepad1.right_bumper || t > 0.5){
+            else if (!gamepad1.right_bumper){
                 pad.setPower(0.0);
-                sleep(8000);
-                resetRuntime();
-            }
 
+            }
+            boolean paspaustas = false;
+            boolean prev = false;
+            boolean MotorOn = false;
+
+
+            paspaustas = gamepad1.triangle;
+                if (paspaustas && !prev){
+                    MotorOn = !MotorOn;
+                }
+                prev = paspaustas;
+                if (MotorOn) {
+                    sm.setPower(1);
+                }
+                else{
+                    sm.setPower(0);
+                }
+
+                 telemetry.addData("Paspaustas ", paspaustas);
+                 telemetry.addData("prev ", prev);
+                 telemetry.addData("MotorOn ", MotorOn);
             ///=====================Pasikėlimas=====================
             if (gamepad1.dpad_up) {
                 pak.setPower(0.75);
